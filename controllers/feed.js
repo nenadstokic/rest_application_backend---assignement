@@ -26,39 +26,6 @@ exports.getPosts = async (req, res, next) => {
   }
 };
 
-exports.getUserStatus = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.userId);
-    res.status(200).json({ status: user.status });
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-};
-
-exports.setUserStatus = async (req, res, next) => {
-  const newStatus = req.body.status;
-  try {
-    const user = await User.findById(req.userId);
-    if (!user) {
-      const error = new Error('Could not find user to change status for.');
-      error.statusCode = 404;
-      throw error;
-    }
-    console.log('User found, chcnging status to ' + newStatus);
-    user.status = newStatus;
-    const result = await user.save();
-    res.status(201).json({ message: 'Status updated successfully!' });
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-};
-
 exports.createPost = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -84,11 +51,11 @@ exports.createPost = async (req, res, next) => {
   });
 
   try {
-    const result = await post.save();
+    await post.save();
     const user = await User.findById(req.userId);
     creator = user;
     user.posts.push(post);
-    const result2 = await user.save();
+    await user.save();
     res.status(201).json({
       message: 'Post created successfully!',
       post: post,
@@ -186,7 +153,7 @@ exports.deletePost = async (req, res, next) => {
     await Post.findByIdAndRemove(postId);
     const user = await User.findById(req.userId);
     user.posts.pull(postId);
-    const save = await user.save();
+    await user.save();
     res.status(200).json({ message: 'Deleted post.' });
   } catch (err) {
     if (!err.statusCode) {
